@@ -17,10 +17,10 @@ if __name__ == "__main__":
     Determine % of shows that are reboots vs non-reboots 
     '''
     for service in streaming_services:
-        # Initialize dictionary and log service name
+        # Initialize dictionary
         service_data = {}
 
-        # Load programming data, use datasets that include tv shows with pending renewal status,
+        # Load programming data, use datasets that include tv shows with pending renewal status for season 2,
         # as renewal status is irrelevant for this analysis
 
         if service == ['netflix_ended','netflix_ongoing']:
@@ -46,10 +46,10 @@ if __name__ == "__main__":
     Determine % of shows renewed for season 2 for reboots vs non-reboots 
     '''
     for service in streaming_services:
-        # Initialize dictionary and log service name
+        # Initialize dictionary
         service_data = {}
 
-        # Load programming data, use datasets that exclude tv shows with pending renewal status
+        # Load programming data, use datasets that exclude tv shows with pending renewal status for season 2
         if service == ['netflix_ended','netflix_ongoing']:
             # Concatenate netflix ended and ongoing tv show data
             processed_df_1 = pd.read_csv('data/processed_' + service[0] + '_data_excl_pending.csv', index_col=0)
@@ -63,8 +63,8 @@ if __name__ == "__main__":
         num_non_reboots = processed_df[processed_df['Reboot'] == False].shape[0]
 
         if num_reboots == 0:
-            # If streaming service has no reboots confirmed cancelled or renewed for season 2, set data entry to -1
-            # to flag the data entry as N/A
+            # If the streaming service has no reboots confirmed cancelled or
+            # renewed for season 2, set data entry to -1 to flag the data entry as N/A
             service_data['% of Reboots Renewed for Season 2'] = -1
         else:
             service_data['% of Reboots Renewed for Season 2'] = (processed_df[(processed_df['Reboot'] == True) &
@@ -104,19 +104,21 @@ if __name__ == "__main__":
                                                     textprops={'color':'#000000', 'fontsize':18, 'fontweight':'bold'})
             # Set pattern for pie wedge representing reboot data
             wedges[0].set_hatch('///')
+            # Set pie chart as a circle
             ax_pie[i, j].axis('equal')
+            # Set pie chart title
             ax_pie[i, j].set_title(pie_chart_df.columns[4*i + j], fontdict={'fontsize':14, 'fontweight':'bold'}, y=0.95)
 
     # Create pie chart legend
     legend_elements = [Patch(facecolor='w', edgecolor='black', hatch='///', label='TV Show Reboots'),
                        Patch(facecolor='w', edgecolor='black', label='TV Show Non-Reboots')]
-    ax_pie[1,1].legend(handles=legend_elements, loc='lower right', bbox_to_anchor=(1.5, -0.25), fontsize=12,
+    ax_pie[1,1].legend(handles=legend_elements, loc='lower right', bbox_to_anchor=(1.65, -0.25), fontsize=12,
                        title='$\\bf{Legend}$', title_fontsize=12)
     # Add pie chart footnotes
-    ax_pie[1,1].text(-4.25, -2, 'Data Source: Wikipedia\nAnalysis by: Adaora at uploading.substack.com')
-    # Set pie chart title
-    ax_pie[0,1].text(-4.25, 1.75, "Streaming Service Original Programming: TV Show Reboots vs. Non-Reboots",
-                     fontdict={'fontsize':20, 'fontweight':'semibold'})
+    ax_pie[1,0].text(-0.993, -2, 'Data Source: Wikipedia\nAnalysis by: Adaora at uploading.substack.com')
+    # Set overall pie chart title
+    ax_pie[0,1].text(1.25, 1.65, "Streaming Service Original TV Shows:\nPercentage of TV Show Reboots",
+                     fontdict={'fontsize':18, 'fontweight':'semibold'}, horizontalalignment="center")
 
     plt.show()
 
@@ -137,7 +139,7 @@ if __name__ == "__main__":
     for bar_idx in bar_loc:
         #if '% of reboots renewed for season 2' ≠ -1, plot the bar
         if bar_graph_df.iloc[bar_idx, 0] != -1:
-            # Assign a pattern to bar for % of reboots renewed for season 2
+            # Assign a pattern to bar for '% of reboots renewed for season 2'
             ax_bar.bar(bar_idx - width/2, bar_graph_df.iloc[bar_idx, 0], width=width, hatch='///', color=colours[bar_idx][0],
                        edgecolor='#FFFFFF')
             # Label bar
@@ -145,7 +147,7 @@ if __name__ == "__main__":
                         '{:,.0%}'.format(bar_graph_df.iloc[bar_idx, 0]), horizontalalignment="center",
                         fontdict={'fontsize':11, 'fontweight':'semibold','color':'#000000'})
 
-        # Graph % of non-reboots renewed for season 2
+        # Graph '% of non-reboots renewed for season 2'
         ax_bar.bar(bar_idx + width/2, bar_graph_df.iloc[bar_idx, 1], width=width, color=colours[bar_idx][1],
                    edgecolor='#FFFFFF')
         # Label bar
@@ -178,7 +180,8 @@ if __name__ == "__main__":
     ax_bar.text(4 - width/2, 0.015, 'N/A', horizontalalignment="center",
                     fontdict={'fontsize':11, 'fontweight':'semibold','color':'#000000'})
     # Set bar chart title
-    ax_bar.text(3 + width, 1.1, "Streaming Service Original Programming:\nPercentage of TV Shows Renewed for Season 2",
-                      fontdict={'fontsize': 16, 'fontweight': 'semibold'}, horizontalalignment="center")
+    ax_bar.text(3 + width, 1.1, "Streaming Service Original Programming:"
+                                "\nPercentage of TV Shows Renewed for Season 2",
+                fontdict={'fontsize': 16, 'fontweight': 'semibold'}, horizontalalignment="center")
 
     plt.show()
