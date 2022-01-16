@@ -5,6 +5,7 @@ from scipy.stats import gaussian_kde
 from sklearn.neighbors import KernelDensity
 import matplotlib as mpl
 import matplotlib.gridspec as grid_spec
+import math
 
 def Q1(x):
     return np.percentile(x, 25)
@@ -12,11 +13,7 @@ def Q1(x):
 def Q3(x):
     return np.percentile(x, 75)
 
-if __name__ == "__main__":
-    # Load Spotify data
-    sp_df = pd.read_csv('data/processed_spotify_songs_duration.csv', index_col=0)
-    sp_df = sp_df.drop(columns=['playlist_url', 'track_uri', 'title'])
-
+def IQR_plot(sp_df):
     '''
     Plot song duration line graph 
     '''
@@ -53,6 +50,7 @@ if __name__ == "__main__":
 
     plt.show()
 
+def discrete_normal(sp_df):
     '''
     Plot song duration density scatter plot 
     '''
@@ -69,11 +67,12 @@ if __name__ == "__main__":
         idx = z.argsort()
         x, y, z = x[idx], y[idx], z[idx]
 
-        plt.scatter(x, y, c=z, s=20)
+        plt.scatter(x, y, c=z, s=20, cmap=plt.get_cmap("Greens"))
 
     plt.colorbar()
     plt.show()
 
+def ridge_plot(sp_df):
     '''
     Plot song duration ridgeplot
     '''
@@ -132,3 +131,126 @@ if __name__ == "__main__":
         i += 1
 
     plt.show()
+
+def normal_distribution(x, mean, std):
+    return np.exp(-0.5 * ((x - mean) / std)**2) / (np.sqrt(2*np.pi) * std)
+
+def linear_interpolation(x, y, f):
+    x_lower = math.floor(x)
+    x_upper = math.ceil(x)
+
+    """
+    The method used here is to linearly approximate the z-value for (x_lower, y) and (x_upper, y)
+    and then linearly approximate again to approximate z-value for (x, y)
+    """
+
+    # first we do x_lower, we need y-values that standle the given y
+    y_above = np.inf
+    y_below = np.inf
+    for a, b in f:
+        if a != x_lower:
+            continue
+        if b == y:
+            y_below = y_above = b
+            break
+        elif b > y:
+            if abs(y - b) < abs(y - y_above):
+                y_above = b
+        else:
+            if abs(y - b) < abs(y - y_below):
+                y_below = b
+
+    # now we can calculate z-lower using a linear interpolation
+    if y_below == np.inf or y_above == np.inf:
+        z_lower = 0
+    else:
+        z_lower = f[(x_lower, y_below)] + (f[(x_lower, y_above)] - f[(x_lower, y_below)]) / (y_above - y_below) * (y - y_below)
+
+
+    # we repeat for x_upper and z_upper
+    y_above = np.inf
+    y_below = np.inf
+    for a, b in f:
+        if a != x_upper:
+            continue
+        if b == y:
+            y_below = y_above = b
+            break
+        elif b > y:
+            if abs(y - b) < abs(y - y_above):
+                y_above = b
+        else:
+            if abs(y - b) < abs(y - y_below):
+                y_below = b
+
+    if y_below == np.inf or y_above == np.inf:
+        z_upper = 0
+    else:
+        z_upper = f[(x_upper, y_below)] + (f[(x_upper, y_above)] - f[(x_upper, y_below)]) / (y_above - y_below) * (y - y_below)
+
+
+    # now we do the final linear interpolation across the x-values
+    if x_lower == x_upper:
+        z_approx = z_upper
+    else:
+        z_approx = z_lower + (z_upper - z_lower) / (x_upper - x_lower) * (x - x_lower)
+    return z_approx
+
+
+def continuous_normal(sp_df):
+    '''
+    Plot song duration density scatter plot 
+    '''
+
+    fig2, ax = plt.subplots()
+
+    # first I need to normalize the data
+    """
+    statistics_df = sp_df.groupby("release year").agg(["mean", "std"])
+    for i, row in sp_df.copy().iterrows():
+        duration, release_year = row
+        mean, std = statistics_df.loc[release_year].values
+        sp_df.iloc[i]["duration"] = (duration - mean)/std
+    """
+
+    f = {}
+    for year in range(1991, 2022):
+
+        x = sp_df.loc[sp_df['release year'] == year, 'release year'].to_numpy()
+        y = sp_df.loc[sp_df['release year'] == year, 'duration'].to_numpy()
+
+        # Calculate the point density
+        z = gaussian_kde(y)(y)
+        idx = z.argsort()
+        X, Y, Z = x[idx], y[idx], z[idx]
+
+        for x, y, z in zip(X, Y, Z):
+            f[(x, y)] = z
+
+    xx = np.arange(1991, 2022, 0.1)
+    yy = np.arange(100, 500, 5)
+
+    zz = []
+    for x in xx:
+        print(x)
+        row = []
+        for y in yy:
+            row.append(linear_interpolation(x, y, f))
+        zz.append(row)
+    
+    X, Y = np.meshgrid(xx, yy)
+    Z = np.array(zz).T
+    
+    plt.contourf(X, Y, Z, s=20, cmap=plt.get_cmap("Greens"))
+    plt.colorbar()
+    plt.show()
+
+if __name__ == "__main__":
+    # Load Spotify data
+    sp_df = pd.read_csv('processed_spotify_songs_duration.csv', index_col=0)
+    sp_df = sp_df.drop(columns=['playlist_url', 'track_uri', 'title'])
+
+    #IQR_plot(sp_df)
+    #discrete_normal(sp_df)
+    #ridge_plot(sp_df)
+    continuous_normal(sp_df)
