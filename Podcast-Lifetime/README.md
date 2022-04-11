@@ -1,2 +1,2 @@
 # Podcast-Lifetime-Analysis
-Supporting code for podcast lifetime analysis discussed in the Uploading newsletter post, ["Are new podcasts popular?"](https://uploading.substack.com/p/are-new-podcasts-popular). 
+Supporting code for podcast lifetime analysis discussed in the Uploading newsletter post, ["How old are today's most popular podcasts?"](https://uploading.substack.com/p/how-old-are-popular-podcasts). 
